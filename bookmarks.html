@@ -1,0 +1,55 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Bookmarks</title>
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+  <div class="container">
+    <header class="header">
+      <h1 class="header-title">📚 Bookeeper</h1>
+      <div class="search-wrapper">
+        <svg class="search-icon" xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+          <circle cx="11" cy="11" r="8"></circle>
+          <line x1="21" y1="21" x2="16.65" y2="16.65"></line>
+        </svg>
+        <input
+          type="text"
+          id="searchInput"
+          class="search-input"
+          placeholder="Ask AI about your bookmarks..."
+          autofocus
+        />
+        <button id="aiToggle" class="ai-toggle active" title="AI Search via LiteLLM">
+          <span class="ai-toggle-icon">🤖</span>
+          <span class="ai-toggle-label">AI</span>
+        </button>
+        <span id="resultCount" class="result-count"></span>
+      </div>
+      <div id="aiResponse" class="ai-response hidden"></div>
+      <div id="aiSettings" class="ai-settings hidden">
+        <label class="ai-setting-label">
+          LiteLLM Endpoint:
+          <input type="text" id="litellmUrl" class="ai-setting-input" value="http://localhost:4000" />
+        </label>
+        <label class="ai-setting-label">
+          Model:
+          <input type="text" id="litellmModel" class="ai-setting-input" value="gpt-4o-mini" />
+        </label>
+        <label class="ai-setting-label">
+          API Key (optional):
+          <input type="password" id="litellmApiKey" class="ai-setting-input" placeholder="Leave empty if not required" />
+        </label>
+      </div>
+    </header>
+
+    <main id="bookmarkContainer" class="bookmark-container">
+      <!-- Bookmarks will be rendered here -->
+    </main>
+  </div>
+
+  <script src="bookmarks.js"></script>
+</body>
+</html>
