@@ -15,10 +15,8 @@ chrome.runtime.onInstalled.addListener(() => {
   });
 });
 
-// ── Handle context menu click ───────────────────────────
-chrome.contextMenus.onClicked.addListener(async (info, tab) => {
-  if (info.menuItemId !== "add-qbookmark") return;
-
+// ── Shared bookmark logic ───────────────────────────────
+async function addQBookmark(tab) {
   const title = tab.title || "Untitled";
   const url = tab.url;
 
@@ -47,4 +45,21 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
     // Show error toast
     await showToast(tab.id, `❌ Failed to save bookmark: ${err.message}`, "error").catch(() => {});
   }
+}
+
+// ── Handle context menu click ───────────────────────────
+chrome.contextMenus.onClicked.addListener(async (info, tab) => {
+  if (info.menuItemId !== "add-qbookmark") return;
+  await addQBookmark(tab);
+});
+
+// ── Handle keyboard shortcut (Command+B / Ctrl+B) ──────
+chrome.commands.onCommand.addListener(async (command) => {
+  if (command !== "add-qbookmark") return;
+
+  // Get the currently active tab
+  const [tab] = await chrome.tabs.query({ active: true, currentWindow: true });
+  if (!tab) return;
+
+  await addQBookmark(tab);
 });
