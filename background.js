@@ -1,6 +1,6 @@
 // QBookeeper - Right-click to bookmark & auto-categorize via Gemini
 
-const GEMINI_API_KEY = "AIzaSyCdOdso-cftAiEeXrxDqMd_-vNDsK0xzQc";
+const GEMINI_API_KEY = "";
 const GEMINI_MODEL = "gemini-2.5-flash";
 const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 const CATEGORIES = ["News", "Documents", "Media", "Gaming"];
