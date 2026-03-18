@@ -1,8 +1,7 @@
 // QBookeeper - Right-click to bookmark & auto-categorize via Gemini
 
-const GEMINI_API_KEY = "";
 const GEMINI_MODEL = "gemini-2.5-flash";
-const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent`;
 const CATEGORIES = ["News", "Documents", "Media", "Gaming"];
 const PARENT_FOLDER_NAME = "QBookmarks";
 
@@ -112,6 +111,21 @@ async function showToast(tabId, message, type = "info") {
   });
 }
 
+// ── Get OAuth2 token via chrome.identity ─────────────────
+async function getOAuth2Token() {
+  return new Promise((resolve, reject) => {
+    chrome.identity.getAuthToken({ interactive: true }, (token) => {
+      if (chrome.runtime.lastError) {
+        reject(new Error(chrome.runtime.lastError.message));
+      } else if (!token) {
+        reject(new Error("Failed to obtain OAuth2 token"));
+      } else {
+        resolve(token);
+      }
+    });
+  });
+}
+
 // ── Call Gemini to categorize the bookmark ───────────────
 async function categorizeWithGemini(title, url) {
   const prompt = `You are a bookmark categorizer. Given a webpage title and URL, categorize it into exactly one of these categories: ${CATEGORIES.join(", ")}.
@@ -121,10 +135,14 @@ Respond with only one word: the category name. Nothing else.
 Title: ${title}
 URL: ${url}`;
 
+  // Get OAuth2 bearer token
+  const token = await getOAuth2Token();
+
   const response = await fetch(GEMINI_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
+      "Authorization": `Bearer ${token}`,
     },
     body: JSON.stringify({
       contents: [
@@ -138,6 +156,56 @@ URL: ${url}`;
       },
     }),
   });
+
+  // If we get a 401, the token may be stale — remove it and retry once
+  if (response.status === 401) {
+    console.warn("[QBookeeper] OAuth2 token expired, refreshing...");
+    await new Promise((resolve, reject) => {
+      chrome.identity.removeCachedAuthToken({ token }, () => {
+        if (chrome.runtime.lastError) {
+          reject(new Error(chrome.runtime.lastError.message));
+        } else {
+          resolve();
+        }
+      });
+    });
+    const newToken = await getOAuth2Token();
+    const retryResponse = await fetch(GEMINI_URL, {
+      method: "POST",
+      headers: {
+        "Content-Type": "application/json",
+        "Authorization": `Bearer ${newToken}`,
+      },
+      body: JSON.stringify({
+        contents: [
+          {
+            parts: [{ text: prompt }],
+          },
+        ],
+        generationConfig: {
+          temperature: 0,
+          maxOutputTokens: 100,
+        },
+      }),
+    });
+
+    if (!retryResponse.ok) {
+      const errorText = await retryResponse.text();
+      throw new Error(`Gemini returned ${retryResponse.status}: ${errorText}`);
+    }
+
+    const retryData = await retryResponse.json();
+    console.log("[QBookeeper] Gemini full response:", JSON.stringify(retryData, null, 2));
+    const retryRaw = (retryData.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
+    const retryMatched = CATEGORIES.find(
+      (cat) => cat.toLowerCase() === retryRaw.toLowerCase()
+    );
+    if (!retryMatched) {
+      console.warn(`[QBookeeper] Gemini returned unexpected category "${retryRaw}", defaulting to "Documents"`);
+      return "Documents";
+    }
+    return retryMatched;
+  }
 
   if (!response.ok) {
     const errorText = await response.text();

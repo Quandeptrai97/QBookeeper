@@ -1,17 +1,25 @@
 {
   "manifest_version": 3,
   "name": "QBookeeper",
+  "key": "MIIBIjANBgkqhkiG9w0BAQEFAAOCAQ8AMIIBCgKCAQEAx+uVUPZQoplb3CYFwkj6d5F8idBLOiJxzFDbpp9fcs9ATvRECeRBH2Ex1UBXQ3XSAeIFuDyl59q28solRTOETgaf+yQ9ts/hl/iofssArdppN49nFhC0dWEF8T6ONnEojGwL/3D3KvrThM+WnKUJ9ufALq54Wbo+tdPP5NOSTO3JXq4sjpYz0MiPuKmZD2WkgtuBp3s1dGGyFz/439MNjbEwxJcm9eONJ1Y+CaZhwpo1MFYoEPSUh5dVJFXLhH2ELU+ZJ9gcea7FA55qFp3F2cs8dMbjlPdNgpSU69S97aaXU2I+F/hnz7Ip4UUo96/bldSG7GBmuJkEZ4MU+4UAxwIDAQAB",
   "version": "1.0.0",
   "description": "Right-click to bookmark and auto-categorize via Gemini",
   "permissions": [
     "bookmarks",
     "contextMenus",
     "scripting",
-    "activeTab"
+    "activeTab",
+    "identity"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*"
   ],
+  "oauth2": {
+    "client_id": "268633933026-dh96kqdmghhmd9ts31otk33394m2u97m.apps.googleusercontent.com",
+    "scopes": [
+      "https://www.googleapis.com/auth/generative-language.retriever"
+    ]
+  },
   "background": {
     "service_worker": "background.js"
   },
