@@ -5,7 +5,9 @@
   "description": "Right-click to bookmark and auto-categorize via Gemini",
   "permissions": [
     "bookmarks",
-    "contextMenus"
+    "contextMenus",
+    "scripting",
+    "activeTab"
   ],
   "host_permissions": [
     "https://generativelanguage.googleapis.com/*"
