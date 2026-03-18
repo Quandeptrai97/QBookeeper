@@ -1,7 +1,8 @@
-// QBookeeper - Right-click to bookmark & auto-categorize via LLM
+// QBookeeper - Right-click to bookmark & auto-categorize via Gemini
 
-const LITELLM_BASE_URL = "http://localhost:6655";
-const LITELLM_MODEL = "gpt-4o-mini";
+const GEMINI_API_KEY = "AIzaSyCdOdso-cftAiEeXrxDqMd_-vNDsK0xzQc";
+const GEMINI_MODEL = "gemini-2.5-flash";
+const GEMINI_URL = `https://generativelanguage.googleapis.com/v1beta/models/${GEMINI_MODEL}:generateContent?key=${GEMINI_API_KEY}`;
 const CATEGORIES = ["News", "Documents", "Media", "Gaming"];
 const PARENT_FOLDER_NAME = "QBookmarks";
 
@@ -22,10 +23,10 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   const url = tab.url;
 
   try {
-    console.log("Adding Qbookmark");
+    console.log(`[QBookeeper] Adding bookmark: "${title}" (${url})`);
 
-    // 1. Ask LLM to categorize
-    const category = await categorizeWithLLM(title, url);
+    // 1. Ask Gemini to categorize
+    const category = await categorizeWithGemini(title, url);
 
     // 2. Find or create folder structure: QBookmarks > <Category>
     const categoryFolderId = await getOrCreateCategoryFolder(category);
@@ -43,8 +44,8 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   }
 });
 
-// ── Call LiteLLM to categorize the bookmark ─────────────
-async function categorizeWithLLM(title, url) {
+// ── Call Gemini to categorize the bookmark ───────────────
+async function categorizeWithGemini(title, url) {
   const prompt = `You are a bookmark categorizer. Given a webpage title and URL, categorize it into exactly one of these categories: ${CATEGORIES.join(", ")}.
 
 Respond with only one word: the category name. Nothing else.
@@ -52,26 +53,32 @@ Respond with only one word: the category name. Nothing else.
 Title: ${title}
 URL: ${url}`;
 
-  const response = await fetch(`${LITELLM_BASE_URL}/litellm/v1/chat/completions`, {
+  const response = await fetch(GEMINI_URL, {
     method: "POST",
     headers: {
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      model: LITELLM_MODEL,
-      messages: [{ role: "user", content: prompt }],
-      temperature: 0,
-      max_tokens: 10,
+      contents: [
+        {
+          parts: [{ text: prompt }],
+        },
+      ],
+      generationConfig: {
+        temperature: 0,
+        maxOutputTokens: 100,
+      },
     }),
   });
 
   if (!response.ok) {
     const errorText = await response.text();
-    throw new Error(`LiteLLM returned ${response.status}: ${errorText}`);
+    throw new Error(`Gemini returned ${response.status}: ${errorText}`);
   }
 
   const data = await response.json();
-  const raw = (data.choices?.[0]?.message?.content || "").trim();
+  console.log("[QBookeeper] Gemini full response:", JSON.stringify(data, null, 2));
+  const raw = (data.candidates?.[0]?.content?.parts?.[0]?.text || "").trim();
 
   // Validate the response is one of our categories (case-insensitive match)
   const matched = CATEGORIES.find(
@@ -79,7 +86,7 @@ URL: ${url}`;
   );
 
   if (!matched) {
-    console.warn(`[QBookeeper] LLM returned unexpected category "${raw}", defaulting to "Documents"`);
+    console.warn(`[QBookeeper] Gemini returned unexpected category "${raw}", defaulting to "Documents"`);
     return "Documents";
   }
 

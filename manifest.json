@@ -2,14 +2,13 @@
   "manifest_version": 3,
   "name": "QBookeeper",
   "version": "1.0.0",
-  "description": "Right-click to bookmark and auto-categorize via LLM",
+  "description": "Right-click to bookmark and auto-categorize via Gemini",
   "permissions": [
     "bookmarks",
-    "contextMenus",
-    "storage"
+    "contextMenus"
   ],
   "host_permissions": [
-    "http://localhost:6655/*"
+    "https://generativelanguage.googleapis.com/*"
   ],
   "background": {
     "service_worker": "background.js"
