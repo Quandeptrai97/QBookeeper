@@ -25,6 +25,9 @@ chrome.contextMenus.onClicked.addListener(async (info, tab) => {
   try {
     console.log(`[QBookeeper] Adding bookmark: "${title}" (${url})`);
 
+    // Show "saving" toast
+    await showToast(tab.id, "📚 Saving bookmark...", "info");
+
     // 1. Ask Gemini to categorize
     const category = await categorizeWithGemini(title, url);
 
