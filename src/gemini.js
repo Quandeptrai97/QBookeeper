@@ -4,13 +4,25 @@ import { GEMINI_URL, CATEGORIES } from "./config.js";
 import { getOAuth2Token, removeCachedToken } from "./auth.js";
 
 /**
- * Build the request body for Gemini API.
+ * System instruction that defines Gemini's role and behavior.
+ * Separated from user content for better prompt adherence and token efficiency.
  */
-function buildRequestBody(prompt) {
+const SYSTEM_INSTRUCTION = `You are a bookmark categorizer. Given a webpage title and URL, categorize it into exactly one of these categories: ${CATEGORIES.join(", ")}.
+
+Respond with only one word: the category name. Nothing else.`;
+
+/**
+ * Build the request body for Gemini API.
+ * Uses systemInstruction for behavioral pre-conditions, separate from user content.
+ */
+function buildRequestBody(title, url) {
   return JSON.stringify({
+    systemInstruction: {
+      parts: [{ text: SYSTEM_INSTRUCTION }],
+    },
     contents: [
       {
-        parts: [{ text: prompt }],
+        parts: [{ text: `Title: ${title}\nURL: ${url}` }],
       },
     ],
     generationConfig: {
@@ -43,14 +55,7 @@ function parseCategoryResponse(data) {
  * Handles token expiry with a single retry.
  */
 export async function categorizeWithGemini(title, url) {
-  const prompt = `You are a bookmark categorizer. Given a webpage title and URL, categorize it into exactly one of these categories: ${CATEGORIES.join(", ")}.
-
-Respond with only one word: the category name. Nothing else.
-
-Title: ${title}
-URL: ${url}`;
-
-  const body = buildRequestBody(prompt);
+  const body = buildRequestBody(title, url);
 
   // Get OAuth2 bearer token
   const token = await getOAuth2Token();
